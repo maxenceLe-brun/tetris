@@ -68,6 +68,10 @@ Next = random.randrange(0,7)
 angle = 0
 time = 0
 turn = 1
+level = 1
+down = False
+score = 0
+SCORE = 0
 
 def cube(x:int,y:int,rgb:tuple):
     """
@@ -110,16 +114,24 @@ while running:
     légende : 
         x & y sont les coordonées
         X & Y sont respectivement la longueur et la hauteur d'un block
+        N est le block joué actuellement
+        Next est le block suivant, qui s'applique une fois le block actuel placé
+        time est un compteur de tick
+        turn est un compteur de rapidité pour chaque ligne gagnés
     """
     
     if N == -1:
+        MAP = MVD_MAP[:]
         for a in range(len(MAP)):
             if -1 not in MAP[a] and a != 24:
                 MAP = [[-1 for a in range(10)]] + MAP[:a] + MAP[a+1:]
                 turn += 1
+                score += (25-a) * level
             if -1 not in MAP[a] and a == 24:
                 MAP = [[-1 for a in range(10)]] + MAP[:a]
                 turn += 1
+                score += 25 * level
+        SCORE += score + score*(score // 25 - 1) 
         MVD_MAP = MAP[:]
         angle = 0
         N = Next
@@ -138,7 +150,10 @@ while running:
             MVD_MAP[a] = MVD_MAP[a][:((10-X)//2)] + ANGLE[angle][N][a] + MVD_MAP[a][((10-X)//2)+X:]
     time += 1
     
-    if time >= 3000 - 50 * turn and y < 24 - (Y-1) :
+    if down:
+        time += 15
+             
+    if time >= 2000 - 20 * turn and y < 24 - (Y-1):
         """
         Go expliquer le if juste en dessous : 
         
@@ -170,34 +185,53 @@ while running:
             time = 0
             MVD_MAP = MAP[:]
             y += 1
-            Y = len(ANGLE[angle % 4][N])
-            X = len(ANGLE[angle % 4][N][0])
             for a in range(Y):
                 MVD_MAP[a+y] = MVD_MAP[a+y][:((10-X)//2)+x] + ANGLE[angle%4][N][a] + MVD_MAP[a+y][((10-X)//2) + X + x:]
+            for a in range(len(MAP)):
+                for b in range(len(MAP[a])):
+                    if MVD_MAP[a][b] != MAP[a][b] and MAP[a][b] != -1 and MVD_MAP[a][b] != -1:
+                        y -= 1
+                        MVD_MAP = MAP[:]
+                        for c in range(Y):
+                            MVD_MAP[c+y] = MVD_MAP[c+y][:((10-X)//2)+x] + ANGLE[angle%4][N][c] + MVD_MAP[c+y][((10-X)//2) + X + x:]
+                        N =- 1
+            for a in range(Y):
+                for b in range(X):
+                    if MVD_MAP[y+a][((10-X)//2)+x+b] != -1 and MAP[y+a][((10-X)//2)+x+b] != -1:
+                        y -= 1
+                        MVD_MAP = MAP[:]
+                        for c in range(Y):
+                            MVD_MAP[c+y] = MVD_MAP[c+y][:((10-X)//2)+x] + ANGLE[angle%4][N][c] + MVD_MAP[c+y][((10-X)//2) + X + x:]
+                        N =- 1
         else:
-            time = 0
-            MAP = MVD_MAP[:]
-            N=-1
+            N =- 1
+    if time >= 2000 - 20 * turn and y == 24 - (Y-1):
+        N = -1
     
-    if time >= 3000 - 50 * turn and y == 24 - (Y-1):
+    if N == -1:
+        for a in range(len(MAP)):
+            for b in range(len(MAP[a])):
+                if MAP[a][b] != -1 and MVD_MAP[a][b] == -1:
+                    MVD_MAP[a][b] = MAP[a][b]
         time = 0
         MAP = MVD_MAP[:]
-        N = -1
     
     if LAST_MOVE != MVD_MAP:
         for a in range(len(MAP)):
             for b in range(len(MAP[a])):
-                if MAP[a][b] != -1:
-                    if MVD_MAP[a][b] == -1:
-                        print(a,b)
-                        MVD_MAP[a][b] = MAP[a][b]
+                if MAP[a][b] != -1 and MVD_MAP[a][b] == -1:
+                    MVD_MAP[a][b] = MAP[a][b]
         re_place()
         pygame.display.flip()
         LAST_MOVE = MVD_MAP[:]
+        
+    if down:
+        time += 15
+        
     for event in pygame.event.get():
         if len(str(event)) > 60:
             
-            if str(event)[40:50] == '1073741906' and y < 24 - (Y-1):
+            if str(event)[40:50] == '1073741906' and ((N != 6 and y < 24 - (Y-1)) or (N == 6 and y < 25 - 4)):
                 angle += 1
                 MVD_MAP = MAP[:]
                 Y = len(ANGLE[angle % 4][N])
@@ -208,27 +242,54 @@ while running:
                     x -= X-5 +X%2
                 for a in range(Y):
                     MVD_MAP[a+y] = MVD_MAP[a+y][:((10-X)//2)+x] + ANGLE[angle%4][N][a] + MVD_MAP[a+y][((10-X)//2) + X + x:]
-            
+                for a in range(len(MAP)):
+                    for b in range(len(MAP[a])):
+                        if MVD_MAP[a][b] != MAP[a][b] and MAP[a][b] != -1 and MVD_MAP[a][b] != -1:
+                            angle -= 1
+                            MVD_MAP = MAP[:]
+                            Y = len(ANGLE[angle % 4][N])
+                            X = len(ANGLE[angle % 4][N][0])
+                            for c in range(Y):
+                                MVD_MAP[c+y] = MVD_MAP[c+y][:((10-X)//2)+x] + ANGLE[angle%4][N][c] + MVD_MAP[c+y][((10-X)//2) + X + x:]
             if str(event)[40:50] == '1073741903' and X//2 + x < 5:
                 if False not in [[[MAP[y + a][((10 - X) // 2) + X + x]] for a in range(Y)] == [[-1] for a in range(Y)] or ([[MAP[y + a][((10 - X) // 2) + X + x]] for a in range(Y)][a][0] == -1 and (ANGLE[angle % 4][N][a][-1] != -1 or ANGLE[angle % 4][N][a][-1] == -1)) or (([[MAP[y + a][((10 - X) // 2) + X + x]] for a in range(Y)][a][0] != -1 or [[MAP[y + a][((10 - X) // 2) + X + x]] for a in range(Y)][a][0] == -1) and ANGLE[angle % 4][N][a][-1] == -1) for a in range(Y)]:
                     MVD_MAP = MAP[:]
                     x+=1
-                    Y = len(ANGLE[angle % 4][N])
-                    X = len(ANGLE[angle % 4][N][0])
                     for a in range(Y):
                         MVD_MAP[a+y] = MVD_MAP[a+y][:((10-X)//2)+x] + ANGLE[angle%4][N][a] + MVD_MAP[a+y][((10-X)//2) + X + x:]
+                    for a in range(len(MAP)):
+                        for b in range(len(MAP[a])):
+                            if MVD_MAP[a][b] != MAP[a][b] and MAP[a][b] != -1 and MVD_MAP[a][b] != -1:
+                                x -= 1
+                                MVD_MAP = MAP[:]
+                                Y = len(ANGLE[angle % 4][N])
+                                X = len(ANGLE[angle % 4][N][0])
+                                for c in range(Y):
+                                    MVD_MAP[c+y] = MVD_MAP[c+y][:((10-X)//2)+x] + ANGLE[angle%4][N][c] + MVD_MAP[c+y][((10-X)//2) + X + x:]
+                        
             
             if str(event)[40:50] == '1073741904' and X//2 + X%2 + x > X-5 + X%2:
                 if False not in [[[MAP[y + a][((10 - X) // 2) + x - 1]] for a in range(Y)] == [[-1] for a in range(Y)] or ([[MAP[y + a][((10 - X) // 2) + x - 1]] for a in range(Y)][a][0] == -1 and (ANGLE[angle % 4][N][a][0] != -1 or ANGLE[angle % 4][N][a][0] == -1)) or (([[MAP[y + a][((10 - X) // 2) + x -1]] for a in range(Y)][a][0] != -1 or [[MAP[y + a][((10 - X) // 2) + x -1]] for a in range(Y)][a][0] == -1) and ANGLE[angle % 4][N][a][0] == -1) for a in range(Y)]:
                     MVD_MAP = MAP[:]
                     x -= 1
-                    Y = len(ANGLE[angle % 4][N])
-                    X = len(ANGLE[angle % 4][N][0])
                     for a in range(Y):
                         MVD_MAP[a+y] = MVD_MAP[a+y][:((10-X)//2)+x] + ANGLE[angle%4][N][a] + MVD_MAP[a+y][((10-X)//2) + X + x:]
+                    for a in range(len(MAP)):
+                        for b in range(len(MAP[a])):
+                            if MVD_MAP[a][b] != MAP[a][b] and MAP[a][b] != -1 and MVD_MAP[a][b] != -1:
+                                x += 1
+                                MVD_MAP = MAP[:]
+                                Y = len(ANGLE[angle % 4][N])
+                                X = len(ANGLE[angle % 4][N][0])
+                                for c in range(Y):
+                                    MVD_MAP[c+y] = MVD_MAP[c+y][:((10-X)//2)+x] + ANGLE[angle%4][N][c] + MVD_MAP[c+y][((10-X)//2) + X + x:]
             
+            if str(event)[42:52] == '1073741905':
+                down = True
             if str(event)[40:50] == '1073741905':
-                time = 10000
+                down = False
+                
+           
         if event.type == pygame.QUIT:
             running = False
     pygame.display.flip()
