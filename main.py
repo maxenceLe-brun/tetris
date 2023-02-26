@@ -72,8 +72,12 @@ level = 1
 down = False
 score = 0
 SCORE = 0
-
-def cube(x:int,y:int,rgb:tuple):
+pygame.draw.rect(screen, (200,)*3, (330, 300,len(str(SCORE))*16, 16))
+scored = my_font.render("Score : ", False, (0,)*3)
+text_surface = my_font.render(str(SCORE), False, (0,)*3)
+screen.blit(scored, (280,300))
+screen.blit(text_surface, (330 + 8*len(str(SCORE)), 300))
+def cube(x:int, y:int, rgb:tuple): 
     """
     
 
@@ -119,19 +123,19 @@ while running:
         time est un compteur de tick
         turn est un compteur de rapidité pour chaque ligne gagnés
     """
-    
     if N == -1:
         MAP = MVD_MAP[:]
+        if MAP[0][5] != -1:
+            break
         for a in range(len(MAP)):
             if -1 not in MAP[a] and a != 24:
                 MAP = [[-1 for a in range(10)]] + MAP[:a] + MAP[a+1:]
                 turn += 1
-                score += (25-a) * level
+                score += 25 * level
             if -1 not in MAP[a] and a == 24:
                 MAP = [[-1 for a in range(10)]] + MAP[:a]
                 turn += 1
                 score += 25 * level
-        SCORE += score + score*(score // 25 - 1) 
         MVD_MAP = MAP[:]
         angle = 0
         N = Next
@@ -151,8 +155,14 @@ while running:
     time += 1
     
     if down:
-        time += 15
-             
+        time += 5
+    if score != 0:
+        SCORE += score + (score*(score // 25 - 1))
+        pygame.draw.rect(screen, (200,)*3, (330, 300,len(str(SCORE))*20, 20))
+        text_surface = my_font.render(str(SCORE), False, (0,)*3)
+        screen.blit(text_surface,(330 + 2*len(str(SCORE)), 300))
+        
+        score = 0
     if time >= 2000 - 20 * turn and y < 24 - (Y-1):
         """
         Go expliquer le if juste en dessous : 
