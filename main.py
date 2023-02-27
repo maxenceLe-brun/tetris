@@ -72,11 +72,15 @@ level = 1
 down = False
 score = 0
 SCORE = 0
+
+
 pygame.draw.rect(screen, (200,)*3, (330, 300,len(str(SCORE))*16, 16))
 scored = my_font.render("Score : ", False, (0,)*3)
 text_surface = my_font.render(str(SCORE), False, (0,)*3)
 screen.blit(scored, (280,300))
 screen.blit(text_surface, (330 + 8*len(str(SCORE)), 300))
+
+
 def cube(x:int, y:int, rgb:tuple): 
     """
     
@@ -120,12 +124,17 @@ while running:
         X & Y sont respectivement la longueur et la hauteur d'un block
         N est le block joué actuellement
         Next est le block suivant, qui s'applique une fois le block actuel placé
+        down est l'action de presser la fleche du bas
         time est un compteur de tick
         turn est un compteur de rapidité pour chaque ligne gagnés
+        level n'est pas encore utilisé
+        score est le compteur de score par tour
+        SCORE est le score total du joueur
+        
     """
     if N == -1:
         MAP = MVD_MAP[:]
-        if MAP[0][5] != -1:
+        if MAP[0][5] != -1 or MAP[0][4] != -1:
             break
         for a in range(len(MAP)):
             if -1 not in MAP[a] and a != 24:
@@ -154,8 +163,7 @@ while running:
             MVD_MAP[a] = MVD_MAP[a][:((10-X)//2)] + ANGLE[angle][N][a] + MVD_MAP[a][((10-X)//2)+X:]
     time += 1
     
-    if down:
-        time += 5
+    
     if score != 0:
         SCORE += score + (score*(score // 25 - 1))
         pygame.draw.rect(screen, (200,)*3, (330, 300,len(str(SCORE))*20, 20))
@@ -236,7 +244,7 @@ while running:
         LAST_MOVE = MVD_MAP[:]
         
     if down:
-        time += 15
+        time += 9
         
     for event in pygame.event.get():
         if len(str(event)) > 60:
@@ -303,4 +311,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
     pygame.display.flip()
+file = open("score.txt","a")
+file.write(str(SCORE)+"\n")
+file.close()
 pygame.quit()
